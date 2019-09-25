@@ -1,0 +1,112 @@
+# Hisilicon Hi35xx sample Makefile.param
+
+ifeq ($(PARAM_FILE), )
+     PARAM_FILE:=../../Makefile.param
+     include $(PARAM_FILE)
+endif
+
+################# select sensor type for your sample ###############################
+####    SONY_IMX335_MIPI_5M_30FPS_12BIT              #################
+####    SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1      #################
+####    SONY_IMX335_MIPI_4M_30FPS_12BIT              #################
+####    SONY_IMX335_MIPI_4M_30FPS_10BIT_WDR2TO1      #################
+####    SONY_IMX327_MIPI_2M_30FPS_12BIT              #################
+####    SONY_IMX327_MIPI_2M_30FPS_12BIT_WDR2TO1      #################
+####    SONY_IMX327_2L_MIPI_2M_30FPS_12BIT           #################
+####    SONY_IMX327_2L_MIPI_2M_30FPS_12BIT_WDR2TO1   #################
+####    SONY_IMX307_MIPI_2M_30FPS_12BIT              #################
+####    SONY_IMX307_MIPI_2M_30FPS_12BIT_WDR2TO1      #################
+####    SONY_IMX458_MIPI_1M_129FPS_10BIT             #################
+####    SONY_IMX458_MIPI_2M_90FPS_10BIT              #################
+####    SONY_IMX458_MIPI_4M_40FPS_10BIT              #################
+####    SONY_IMX458_MIPI_4M_60FPS_10BIT              #################
+####    SONY_IMX458_MIPI_8M_30FPS_10BIT              #################
+####    SONY_IMX458_MIPI_12M_20FPS_10BIT             #################
+####    PANASONIC_MN34220_LVDS_2M_30FPS_12BIT        #################
+####    OMNIVISION_OS05A_MIPI_4M_30FPS_12BIT         #################
+####    OMNIVISION_OS05A_MIPI_4M_30FPS_10BIT_WDR2TO1 #################
+
+SENSOR0_TYPE ?= SONY_IMX327_MIPI_2M_30FPS_12BIT
+SENSOR1_TYPE ?= SONY_IMX327_MIPI_2M_30FPS_12BIT
+
+SENSOR_LIBS := $(REL_LIB)/lib_hiae.a
+SENSOR_LIBS += $(REL_LIB)/libisp.a
+SENSOR_LIBS += $(REL_LIB)/lib_hidehaze.a
+SENSOR_LIBS += $(REL_LIB)/lib_hidrc.a
+SENSOR_LIBS += $(REL_LIB)/lib_hildci.a
+SENSOR_LIBS += $(REL_LIB)/lib_hiawb.a
+SENSOR_LIBS += $(REL_LIB)/libsns_imx327.a
+SENSOR_LIBS += $(REL_LIB)/libsns_imx327_2l.a
+SENSOR_LIBS += $(REL_LIB)/libsns_imx307.a
+SENSOR_LIBS += $(REL_LIB)/libsns_imx335.a
+SENSOR_LIBS += $(REL_LIB)/libsns_imx458.a
+SENSOR_LIBS += $(REL_LIB)/libsns_mn34220.a
+SENSOR_LIBS += $(REL_LIB)/libsns_os05a.a
+
+MPI_LIBS := $(REL_LIB)/libmpi.a
+
+COMMON_DIR ?= $(PWD)/../common
+AUDIO_ADP_DIR ?= $(PWD)/../audio/adp
+
+INC_FLAGS := -I$(REL_INC)
+
+ISP_VERSION := ISP_V2
+
+CFLAGS += -Wall -g $(INC_FLAGS) -D$(HIARCH) -D$(HI_FPGA) -lpthread -lm -ldl -D$(ISP_VERSION)
+CFLAGS += -lstdc++
+CFLAGS += $(LIBS_CFLAGS)
+CFLAGS += $(MPP_CFLAGS)
+CFLAGS += -DSENSOR0_TYPE=$(SENSOR0_TYPE)
+CFLAGS += -DSENSOR1_TYPE=$(SENSOR1_TYPE)
+
+
+################ select audio codec type for your sample ################
+ACODEC_TYPE ?= ACODEC_TYPE_INNER
+#external acodec
+#ACODEC_TYPE ?= ACODEC_TYPE_TLV320AIC31
+INNER_HDMI ?= y
+GYRO_DIS ?= n
+
+ifeq ($(ACODEC_TYPE), ACODEC_TYPE_INNER)
+	CFLAGS += -DHI_ACODEC_TYPE_INNER
+endif
+
+ifeq ($(ACODEC_TYPE), ACODEC_TYPE_TLV320AIC31)
+	CFLAGS += -DHI_ACODEC_TYPE_TLV320AIC31
+	INC_FLAGS += -I$(SDK_PATH)/$(EXTDRV)/tlv320aic31
+endif
+
+ifeq ($(INNER_HDMI), y)
+	CFLAGS += -DHI_ACODEC_TYPE_HDMI
+endif
+
+ifeq ($(GYRO_DIS), y)
+	CFLAGS += -DHI_GYRODIS_SUPPORT
+	MPI_LIBS += $(REL_LIB)/libmotionfusion.a
+	INC_FLAGS += -I$(SDK_PATH)/$(EXTDRV)/motionsensor/include
+	INC_FLAGS += -I$(SDK_PATH)/$(EXTDRV)/motionsensor/motionsensor_mng/include
+	INC_FLAGS += -I$(SDK_PATH)/$(EXTDRV)/motionsensor/motionsensor_chip/pub
+endif
+
+#########################################################################
+COMM_SRC := $(wildcard $(COMMON_DIR)/*.c)
+COMM_OBJ := $(COMM_SRC:%.c=%.o)
+COMM_INC := -I$(COMMON_DIR)
+COMM_INC += -I$(AUDIO_ADP_DIR)
+
+MEDIA_MSG_CLIENT_SRC := $(wildcard $(COMMON_DIR)/media_msg/client/*.c)
+MEDIA_MSG_CLIENT_OBJ := $(MEDIA_MSG_CLIENT_SRC:%.c=%.o)
+
+MEDIA_MSG_SERVER_SRC := $(wildcard $(COMMON_DIR)/media_msg/server/*.c)
+MEDIA_MSG_SERVER_OBJ := $(MEDIA_MSG_SERVER_SRC:%.c=%.o)
+
+MEDIA_MSG_INC := -I$(COMMON_DIR)/media_msg/include
+MEDIA_MSG_INC += -I$(SDK_PATH)/hisyslink/ipcmsg/include
+MEDIA_MSG_INC += -I$(SDK_PATH)/hisyslink/datafifo/include
+
+#########################################################################
+LITEOS_BIN_SUPPORT_VI := y
+
+ifeq ($(LITEOS_BIN_SUPPORT_VI), y)
+
+endif
