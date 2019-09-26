@@ -28,7 +28,7 @@ extern "C" {
 #include <sys/prctl.h>
 
 #include "sample_comm.h"
-
+#include "sample_picture_process.h"
 
 /******************************************************************************
 * function : show usage
@@ -38,7 +38,7 @@ extern "C" {
 using namespace cv;
 using namespace std;
 
-
+extern HI_S32 ifFire;
 
 static VI_PIPE g_ViLongExpPipe = 0;
 static VI_PIPE g_ViShortExpPipe = 1;
@@ -351,6 +351,15 @@ static HI_S32 SAMPLE_Capture_StartIsp_NoRun(SAMPLE_VI_CONFIG_S* pstViConfig)
             SAMPLE_PRT("ISP Init failed with %#x!\n", s32Ret);
             return HI_FAILURE;
         }
+
+		//add by zsj
+		s32Ret = SAMPLE_COMM_ISP_Run(ViPipe);
+        if (s32Ret != HI_SUCCESS)
+        {
+                SAMPLE_PRT("ISP Run failed with %#x!\n", s32Ret);
+                SAMPLE_COMM_ISP_Stop(ViPipe);
+                return HI_FAILURE;
+        }
     }
 
     return s32Ret;
@@ -473,6 +482,13 @@ static HI_S32 SAMPLE_Capture_SetIspParam(VI_PIPE ViPipe)
         return s32Ret;
     }
 
+	s32Ret = SAMPLE_Noise_Reduction(ViPipe);
+	if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("SAMPLE_Noise_Reduction failed with %#x\n", s32Ret);
+        return s32Ret;
+    }
+
     return HI_SUCCESS;
 }
 
@@ -529,13 +545,13 @@ static HI_S32 SAMPLE_Capture_TriggerFrameProc(VI_PIPE ViPipe, VI_CHN ViChn, VENC
     {
         return s32Ret;
     }
-
-    s32Ret = HI_MPI_ISP_RunOnce(ViPipe);
+	//delete by zsj
+    /*s32Ret = HI_MPI_ISP_RunOnce(ViPipe);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("HI_MPI_ISP_RunOnce failed with %#x\n", s32Ret);
         return s32Ret;
-    }
+    }*/
 
     aPipeId[0] = ViPipe;
     pastRawInfo[0] = pstRawInfo;
@@ -594,7 +610,7 @@ static HI_S32 SAMPLE_Capture_TriggerFrameProc(VI_PIPE ViPipe, VI_CHN ViChn, VENC
     {
         s32HistSum += stAeStat.au32BEHist1024Value[i];
     }
-    printf("Get sum of histogram :%d\n", s32HistSum);
+    //printf("Get sum of histogram :%d\n", s32HistSum);
 
     HI_S32 s32WB_RSum = 0;
     HI_S32 s32WB_GSum = 0;
@@ -605,8 +621,8 @@ static HI_S32 SAMPLE_Capture_TriggerFrameProc(VI_PIPE ViPipe, VI_CHN ViChn, VENC
         s32WB_GSum += stWBStat.au16ZoneAvgG[i];
         s32WB_BSum += stWBStat.au16ZoneAvgB[i];
     }
-    printf("Get global WB:%d, %d, %d\n", stWBStat.u16GlobalR, stWBStat.u16GlobalG, stWBStat.u16GlobalB);
-    printf("Get sum of WB:%d, %d, %d\n", s32WB_RSum, s32WB_GSum, s32WB_BSum);
+    //printf("Get global WB:%d, %d, %d\n", stWBStat.u16GlobalR, stWBStat.u16GlobalG, stWBStat.u16GlobalB);
+    //printf("Get sum of WB:%d, %d, %d\n", s32WB_RSum, s32WB_GSum, s32WB_BSum);
 
     /* Calculate isp param from stAeStat and stWBStat */
     /* ... */
@@ -621,12 +637,13 @@ static HI_S32 SAMPLE_Capture_TriggerFrameProc(VI_PIPE ViPipe, VI_CHN ViChn, VENC
     /*************************************
     2. second send raw
     **************************************/
-    s32Ret = HI_MPI_ISP_RunOnce(ViPipe);
+    //delete by zsj
+    /*s32Ret = HI_MPI_ISP_RunOnce(ViPipe);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("HI_MPI_ISP_RunOnce failed with %#x\n", s32Ret);
         return s32Ret;
-    }
+    }*/
 
     s32Ret = HI_MPI_VI_SendPipeRaw(1, aPipeId, pastRawInfo, s32MilliSec);
     if (HI_SUCCESS != s32Ret)
@@ -641,6 +658,13 @@ static HI_S32 SAMPLE_Capture_TriggerFrameProc(VI_PIPE ViPipe, VI_CHN ViChn, VENC
         SAMPLE_PRT("HI_MPI_VI_GetChnFrame failed with %#x\n", s32Ret);
         return s32Ret;
     }
+	
+	/*1.火焰检测*/
+	s32Ret = SAMPLE_Picture_Processing(&stYUVFrameInfo.stVFrame);
+	if(1 == s32Ret)
+	{
+		SAMPLE_PRT("fire is home\n");	
+	}
 
     s32Ret = HI_MPI_VENC_SendFrame(VeChn, &stYUVFrameInfo, s32MilliSec);
     if (HI_SUCCESS != s32Ret)
@@ -666,12 +690,12 @@ static HI_S32 SAMPLE_Capture_VideoFrameProc(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S* 
     const VIDEO_FRAME_INFO_S* pastRawInfo[1];
     HI_S32 s32MilliSec = 80;
 
-    s32Ret = HI_MPI_ISP_RunOnce(ViPipe);
+    /*s32Ret = HI_MPI_ISP_RunOnce(ViPipe);
     if (HI_SUCCESS != s32Ret)
     {
         SAMPLE_PRT("HI_MPI_ISP_RunOnce failed with %#x\n", s32Ret);
         return s32Ret;
-    }
+    }*/
 
     aPipeId[0] = ViPipe;
     pastRawInfo[0] = pstRawInfo;
@@ -684,6 +708,105 @@ static HI_S32 SAMPLE_Capture_VideoFrameProc(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S* 
 
     return HI_SUCCESS;
 }
+
+
+HI_S32 SAMPLE_COMM_VENC_ReleaseJpeg(VENC_CHN VencChn, HI_U32 SnapCnt)
+{
+    struct timeval TimeoutVal;
+    fd_set read_fds;
+    HI_S32 s32VencFd;
+    VENC_CHN_STATUS_S stStat;
+    VENC_STREAM_S stStream;
+    HI_S32 s32Ret;
+    HI_U32 i;
+
+#ifdef __HuaweiLite__
+    VENC_STREAM_BUF_INFO_S  stStreamBufInfo;
+#endif
+
+    s32VencFd = HI_MPI_VENC_GetFd(VencChn);
+    if (s32VencFd < 0)
+    {
+        SAMPLE_PRT("HI_MPI_VENC_GetFd faild with%#x!\n", s32VencFd);
+        return HI_FAILURE;
+    }
+
+    for(i=0; i<SnapCnt; i++)
+    {
+        FD_ZERO(&read_fds);
+        FD_SET(s32VencFd, &read_fds);
+        TimeoutVal.tv_sec  = 10;
+        TimeoutVal.tv_usec = 0;
+        s32Ret = select(s32VencFd + 1, &read_fds, NULL, NULL, &TimeoutVal);
+        if (s32Ret < 0)
+        {
+            SAMPLE_PRT("snap select failed!\n");
+            return HI_FAILURE;
+        }
+        else if (0 == s32Ret)
+        {
+            SAMPLE_PRT("snap time out!\n");
+            return HI_FAILURE;
+        }
+        else
+        {
+            if (FD_ISSET(s32VencFd, &read_fds))
+            {
+                s32Ret = HI_MPI_VENC_QueryStatus(VencChn, &stStat);
+                if (s32Ret != HI_SUCCESS)
+                {
+                    SAMPLE_PRT("HI_MPI_VENC_QueryStatus failed with %#x!\n", s32Ret);
+                    return HI_FAILURE;
+                }
+                /*******************************************************
+                suggest to check both u32CurPacks and u32LeftStreamFrames at the same time,for example:
+                 if(0 == stStat.u32CurPacks || 0 == stStat.u32LeftStreamFrames)
+                 {                SAMPLE_PRT("NOTE: Current  frame is NULL!\n");
+                    return HI_SUCCESS;
+                 }
+                 *******************************************************/
+                if (0 == stStat.u32CurPacks)
+                {
+                    SAMPLE_PRT("NOTE: Current  frame is NULL!\n");
+                    return HI_SUCCESS;
+                }
+                stStream.pstPack = (VENC_PACK_S*)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
+                if (NULL == stStream.pstPack)
+                {
+                    SAMPLE_PRT("malloc memory failed!\n");
+                    return HI_FAILURE;
+                }
+                stStream.u32PackCount = stStat.u32CurPacks;
+                s32Ret = HI_MPI_VENC_GetStream(VencChn, &stStream, -1);
+                if (HI_SUCCESS != s32Ret)
+                {
+                    SAMPLE_PRT("HI_MPI_VENC_GetStream failed with %#x!\n", s32Ret);
+
+                    free(stStream.pstPack);
+                    stStream.pstPack = NULL;
+                    return HI_FAILURE;
+                }
+
+                s32Ret = HI_MPI_VENC_ReleaseStream(VencChn, &stStream);
+                if (HI_SUCCESS != s32Ret)
+                {
+                    SAMPLE_PRT("HI_MPI_VENC_ReleaseStream failed with %#x!\n", s32Ret);
+
+                    free(stStream.pstPack);
+                    stStream.pstPack = NULL;
+
+                    return HI_FAILURE;
+                }
+
+                free(stStream.pstPack);
+                stStream.pstPack = NULL;
+            }
+        }
+    }
+
+    return HI_SUCCESS;
+}
+
 
 HI_VOID * SAMPLE_Capture_Thread(HI_VOID* pargs)
 {
@@ -721,15 +844,27 @@ HI_VOID * SAMPLE_Capture_Thread(HI_VOID* pargs)
             {
                 continue;
             }
+			if(ifFire)
+			{
+				/* get jpg */
+				s32Ret = SAMPLE_COMM_VENC_SaveJpeg(g_VencChn, 1);
+				if (HI_SUCCESS != s32Ret)
+				{
+					SAMPLE_PRT("SAMPLE_COMM_VENC_SaveJpeg failed with %#x\n", s32Ret);
+					continue;
+				}
+				printf("Save captured picture successfully.\n");
+			}
+			else
+			{
+				s32Ret = SAMPLE_COMM_VENC_ReleaseJpeg(g_VencChn,1);
+				if (HI_SUCCESS != s32Ret)
+				{
+					SAMPLE_PRT("SAMPLE_COMM_VENC_ReleaseJpeg failed with %#x\n", s32Ret);
+					continue;
+				}
+			}
 
-            /* get jpg */
-            s32Ret = SAMPLE_COMM_VENC_SaveJpeg(g_VencChn, 1);
-            if (HI_SUCCESS != s32Ret)
-            {
-                SAMPLE_PRT("SAMPLE_COMM_VENC_SaveJpeg failed with %#x\n", s32Ret);
-                continue;
-            }
-            printf("Save captured picture successfully.\n");
         }
         else if (bLongExpFrame)
         {
