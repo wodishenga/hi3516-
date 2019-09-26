@@ -1,3 +1,13 @@
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs/imgcodecs_c.h>
+
+
+#include <opencv2/highgui.hpp>
+#include <opencv2/core/utility.hpp>
+
+
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -24,6 +34,9 @@ extern "C" {
 * function : show usage
 ******************************************************************************/
 
+
+using namespace cv;
+using namespace std;
 
 
 
@@ -82,7 +95,7 @@ static HI_S32 SAMPLE_Capture_StartVi(SAMPLE_VI_CONFIG_S* pstViConfig)
     VI_CHN_ATTR_S stChnAttr;
     VI_PIPE ViPipe;
     VI_DEV_BIND_PIPE_S  stDevBindPipe;
-    HI_S32 i;
+    HI_U32 i;
     VI_PIPE ViRawOutPipe = pstViConfig->astViInfo[s32SnsId].stPipeInfo.aPipe[0];
     VI_PIPE ViCapturePipe = pstViConfig->astViInfo[s32SnsId].stPipeInfo.aPipe[2];
 
@@ -466,9 +479,10 @@ static HI_S32 SAMPLE_Capture_SetIspParam(VI_PIPE ViPipe)
 static HI_S32 SAMPLE_Capture_StartJpege(VENC_CHN VencChn, SIZE_S stSize)
 {
     HI_S32 s32Ret = HI_SUCCESS;
-    VENC_CHN_ATTR_S stAttr = {0};
+    VENC_CHN_ATTR_S stAttr;
     VENC_RECV_PIC_PARAM_S  stRecvParam;
-
+	
+	memset(&stAttr,0,sizeof(VENC_CHN_ATTR_S));
     stAttr.stVencAttr.enType = PT_JPEG;
     stAttr.stVencAttr.u32MaxPicWidth = stSize.u32Width;
     stAttr.stVencAttr.u32MaxPicHeight = stSize.u32Height;
@@ -671,7 +685,7 @@ static HI_S32 SAMPLE_Capture_VideoFrameProc(VI_PIPE ViPipe, VIDEO_FRAME_INFO_S* 
     return HI_SUCCESS;
 }
 
-HI_VOID SAMPLE_Capture_Thread(HI_VOID* pargs)
+HI_VOID * SAMPLE_Capture_Thread(HI_VOID* pargs)
 {
     HI_S32 s32Ret = HI_FAILURE;
     VIDEO_FRAME_INFO_S  stRawInfo;
@@ -745,6 +759,8 @@ HI_VOID SAMPLE_Capture_Thread(HI_VOID* pargs)
             continue;
         }
     }
+
+	return HI_NULL;
 }
 HI_S32 SAMPLE_TrafficCapture_Offline(HI_VOID)
 {
@@ -766,6 +782,10 @@ HI_S32 SAMPLE_TrafficCapture_Offline(HI_VOID)
     SAMPLE_VO_CONFIG_S stVoConfig;
     SIZE_S stSize;
     HI_S32 s32Ret = HI_SUCCESS;
+
+	VI_VPSS_MODE_S	stVIVPSSMode;
+	VI_DUMP_ATTR_S stDumpAttr;
+	ISP_MODULE_CTRL_U unModCtrl = {0};
 
 
     /************************************************
@@ -833,7 +853,7 @@ HI_S32 SAMPLE_TrafficCapture_Offline(HI_VOID)
         goto EXIT;
     }
 
-    VI_VPSS_MODE_S  stVIVPSSMode;
+    
     HI_MPI_SYS_GetVIVPSSMode(&stVIVPSSMode);
     stVIVPSSMode.aenMode[0] = VI_OFFLINE_VPSS_OFFLINE;
     stVIVPSSMode.aenMode[1] = VI_OFFLINE_VPSS_OFFLINE;
@@ -910,7 +930,7 @@ HI_S32 SAMPLE_TrafficCapture_Offline(HI_VOID)
     /************************************************
     step7:  main capture process
     *************************************************/
-    VI_DUMP_ATTR_S stDumpAttr;
+    
     stDumpAttr.bEnable = HI_TRUE;
     stDumpAttr.u32Depth = 3;
     s32Ret = HI_MPI_VI_SetPipeDumpAttr(g_ViLongExpPipe, &stDumpAttr);
@@ -920,13 +940,13 @@ HI_S32 SAMPLE_TrafficCapture_Offline(HI_VOID)
         goto EXIT4;
     }
 
-    ISP_MODULE_CTRL_U unModCtrl = {0};
+    
     HI_MPI_ISP_GetModuleControl(1, &unModCtrl);
     unModCtrl.bitBypassAEStatFE = 1;
     HI_MPI_ISP_SetModuleControl(1, &unModCtrl);
 
     g_StopThread = HI_FALSE;
-    pthread_create(&g_captureThread, HI_NULL, (HI_VOID *)SAMPLE_Capture_Thread, HI_NULL);
+    pthread_create(&g_captureThread, HI_NULL, SAMPLE_Capture_Thread, HI_NULL);
 
     PAUSE();
 
