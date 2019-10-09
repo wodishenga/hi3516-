@@ -31,11 +31,11 @@ extern "C" {
 
 
 
-extern char macAddr[30];
+//extern char macAddr[30];
 
 
 
-HI_U8 hex2char(HI_U8 hex, HI_U8 flag)
+static HI_U8 hex2char(HI_U8 hex, HI_U8 flag)
 {
 	if (hex <= 9)
 		return hex + '0';
@@ -50,7 +50,7 @@ HI_U8 hex2char(HI_U8 hex, HI_U8 flag)
 }
 
 
-HI_VOID hex2string(HI_U8 *string, HI_U8 *hex, HI_U16 len, HI_U8 flag)
+static HI_VOID hex2string(char *string, char *hex, HI_U16 len, char flag)
 {
 	for (HI_U8 i = 0; i < len; i++)
 	{
@@ -61,7 +61,8 @@ HI_VOID hex2string(HI_U8 *string, HI_U8 *hex, HI_U16 len, HI_U8 flag)
 }
 
 
-HI_VOID delete_char(HI_U8 str[],HI_U8 target){
+static HI_VOID delete_char(char str[],char target)
+{
 	int i,j;
 	for(i=j=0;str[i]!='\0';i++){
 		if(str[i]!=target){
@@ -71,7 +72,7 @@ HI_VOID delete_char(HI_U8 str[],HI_U8 target){
 	str[j]='\0';
 }
 
-HI_S32 get_mac_addr(HI_U8 * macAddr)
+HI_S32 get_mac_addr(char * macAddr)
 {
 	FILE* f_mac = NULL;
 	if((f_mac = fopen("/root/mac.txt","r")) == NULL)
@@ -92,12 +93,12 @@ HI_S32 get_mac_addr(HI_U8 * macAddr)
 }
 
 
-HI_S32 get_mqtt_password(HI_U8 *macAddr, HI_U8 *passwordMd5)
+HI_S32 get_mqtt_password(char *macAddr, char *passwordMd5)
 {
 	
-	HI_U8  password[30] = "0";
-	HI_U8 md51[16];
-	if (strlen(macAddr) > 0) 
+	char  password[30] = "0";
+	char md51[16];
+	if (strlen((char *)macAddr) > 0) 
 	{
 	
 		strcpy(password, macAddr);
@@ -109,7 +110,7 @@ HI_S32 get_mqtt_password(HI_U8 *macAddr, HI_U8 *passwordMd5)
 	return -1;
 }
 
-HI_S32 get_mqtt_username(HI_U8    * macAddr, HI_U8 *username)
+HI_S32 get_mqtt_username(char    * macAddr, char *username)
 {
 	
 	if (strlen(macAddr) > 0) 
@@ -123,7 +124,7 @@ HI_S32 get_mqtt_username(HI_U8    * macAddr, HI_U8 *username)
 	
 }
 
-HI_S32 get_mqtt_clientid(HI_U8    * macAddr, HI_U8 *client)
+HI_S32 get_mqtt_clientid(char    * macAddr, char *client)
 {
 	if (strlen(macAddr) > 0) 
 	{
@@ -135,7 +136,7 @@ HI_S32 get_mqtt_clientid(HI_U8    * macAddr, HI_U8 *client)
 
 }
 
-HI_S32 get_mqtt_pubTopic(HI_U8    * macAddr, HI_U8 *pubTopic)
+HI_S32 get_mqtt_pubTopic(char    * macAddr, char *pubTopic)
 {
 	
 	if (strlen(macAddr)> 0) //ti设备，设备ID长度是9个字节
@@ -148,7 +149,7 @@ HI_S32 get_mqtt_pubTopic(HI_U8    * macAddr, HI_U8 *pubTopic)
 	return -1;
 }
 
-HI_S32 get_mqtt_subTopic(HI_U8 *macAddr, HI_U8  *subTopic)	
+HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic)	
 {
 	if (strlen(macAddr)> 0) //ti设备，设备ID长度是9个字节
 	{
@@ -207,7 +208,7 @@ HI_VOID get_pubContent_msg(char *pubContent)
 	char time_now[30];
 	get_time(time_now);
 	cJSON_AddStringToObject(AlarmDTO,"alarm_time", 	time_now);
-	cJSON_AddStringToObject(AlarmDTO,"mac", 	macAddr);
+	//cJSON_AddStringToObject(AlarmDTO,"mac", 	macAddr);
 	out=cJSON_Print(PubContentDTO);	cJSON_Delete(PubContentDTO); printf("%s\n",out);
 		
 			//sprintf(pubmsg, "%s", out);
@@ -230,7 +231,7 @@ void get_warning_msg(char *pubmsg)
 	char time_now[30];
 	get_time(time_now);
 	cJSON_AddStringToObject(AlarmDTO,"alarm_time", 	time_now);
-	cJSON_AddStringToObject(AlarmDTO,"mac", 	macAddr);
+	//cJSON_AddStringToObject(AlarmDTO,"mac", 	macAddr);
 	cJSON_AddStringToObject(PubDTO,"sign",		"d326ed20de22b9ffe0c0ebc725a8413b");
 	out=cJSON_Print(PubDTO);	cJSON_Delete(PubDTO); printf("%s\n",out);
 

@@ -33,41 +33,16 @@
 
 #include "sample_comm.h"
 
-extern int check_endian();
-extern HI_U16 byte2hex(char *pData);
-extern HI_U16 hex2ascii(HI_U8 data_hex);
-extern HI_U8 ascii2hex(char ascii);
-extern HI_U16 get_len(HI_U8 *pData);
-extern void convert_len_to_assi(HI_U16 len, char *assi_len);
-extern HI_U16 check_sum(HI_U8 *data, HI_U32 len);
-extern void hex2byte(HI_U16 hex, HI_U8 *bytes);
-extern char hex2char(HI_U8 hex, HI_U8 flag);
-extern void hex2string(char *string, char *hex, HI_U16 len, HI_U8 flag);
 
-extern int get_mac_addr(char * macAddr);
-extern int get_mqtt_password(char *macAddr, char *passwordMd5);
-extern int get_mqtt_username(char    * macAddr, char *username);
-extern int get_mqtt_clientid(char    * macAddr, char *client);
-extern int get_mqtt_pubTopic(char    * macAddr, char *pubTopic);
-extern int get_mqtt_subTopic(char *macAddr, char *subTopic);
-
-extern void get_warning_msg(char *pubmsg);
-
-
-
-extern void get_pub_Msg(char *pubmsg);
-
-
-
-
-
-
-
-
-
-
-
-
+extern HI_S32 get_mac_addr(char * macAddr);
+extern HI_S32 get_mqtt_password(char *macAddr, char *passwordMd5);
+extern HI_S32 get_mqtt_username(char    * macAddr, char *username);
+extern HI_S32 get_mqtt_clientid(char    * macAddr, char *client);
+extern HI_S32 get_mqtt_pubTopic(char    * macAddr, char *pubTopic);
+extern HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic);
+extern HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic);
+extern HI_VOID get_pubContent_msg(char *pubContent);
+extern void get_warning_msg(char *pubmsg); 
 
 
 
