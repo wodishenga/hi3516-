@@ -229,7 +229,6 @@ HI_S32 SAMPLE_Flame_Detection(Mat src){
  int col = src.cols;
  ifFire = 0;
 
-
  Mat curGrayFrame = Mat(src.size(), CV_8UC1);
  //将RGB转化成Gray
  cvtColor(src, curGrayFrame, COLOR_RGB2GRAY);
