@@ -33,14 +33,12 @@ extern "C" {
 
 //extern char macAddr[30];
 
-
-
-static HI_U8 hex2char(HI_U8 hex, HI_U8 flag)
+static HI_U8 
+hex2char(HI_U8 hex, HI_U8 flag)
 {
 	if (hex <= 9)
 		return hex + '0';
-	if (hex >= 10 && hex <= 15)
-	{
+	if (hex >= 10 && hex <= 15) {
 		if (flag)
 			return (hex - 10 + 'A');
 		else
@@ -50,10 +48,10 @@ static HI_U8 hex2char(HI_U8 hex, HI_U8 flag)
 }
 
 
-static HI_VOID hex2string(char *string, char *hex, HI_U16 len, char flag)
+static HI_VOID 
+hex2string(char *string, char *hex, HI_U16 len, char flag)
 {
-	for (HI_U8 i = 0; i < len; i++)
-	{
+	for (HI_U8 i = 0; i < len; i++) {
 		string[i * 2] = hex2char(hex[i] >> 4 & 0x0f, flag);
 		string[i * 2 + 1] = hex2char(hex[i] & 0x0f, flag);
 	}
@@ -61,18 +59,21 @@ static HI_VOID hex2string(char *string, char *hex, HI_U16 len, char flag)
 }
 
 
-static HI_VOID delete_char(char str[],char target)
+static HI_VOID
+delete_char(char str[],char target)
 {
 	int i,j;
-	for(i=j=0;str[i]!='\0';i++){
-		if(str[i]!=target){
+	for (i = j = 0; str[i] != '\0'; i++) {
+		if(str[i] != target) {
 			str[j++]=str[i];
 		}
 	}
 	str[j]='\0';
 }
 
-HI_S32 get_mac_addr(char * macAddr)
+
+HI_S32 
+get_mac_addr(char * macAddr)
 {
 	FILE* f_mac = NULL;
 	if((f_mac = fopen("/root/mac.txt","r")) == NULL)
@@ -84,7 +85,6 @@ HI_S32 get_mac_addr(char * macAddr)
 	
 	fread(macAddr,17,1,f_mac);
 	
-	
 	delete_char(macAddr,':');
 	SAMPLE_PRT("macAddr=%s\n", macAddr);
 	fclose(f_mac);
@@ -93,14 +93,13 @@ HI_S32 get_mac_addr(char * macAddr)
 }
 
 
-HI_S32 get_mqtt_password(char *macAddr, char *passwordMd5)
+HI_S32
+get_mqtt_password(char *macAddr, char *passwordMd5)
 {
 	
 	char  password[30] = "0";
 	char md51[16];
-	if (strlen((char *)macAddr) > 0) 
-	{
-	
+	if (strlen((char *)macAddr) > 0) {
 		strcpy(password, macAddr);
 		strcat((char *)password, "_zdst666");
 		md5((const char *)password, strlen((const char *)password), md51);
@@ -110,37 +109,36 @@ HI_S32 get_mqtt_password(char *macAddr, char *passwordMd5)
 	return -1;
 }
 
-HI_S32 get_mqtt_username(char    * macAddr, char *username)
+
+HI_S32
+get_mqtt_username(char *macAddr, char *username)
 {
-	
-	if (strlen(macAddr) > 0) 
-	{
+	if (strlen(macAddr) > 0) {
 		strcpy(username, macAddr);
 		strcat((char *)username, "_account");
 		printf("%s\n", username);
 		return 0;
 	}
 	return -1;
-	
 }
 
-HI_S32 get_mqtt_clientid(char    * macAddr, char *client)
+
+HI_S32
+get_mqtt_clientid(char    * macAddr, char *client)
 {
-	if (strlen(macAddr) > 0) 
-	{
+	if (strlen(macAddr) > 0) {
 		strcpy(client, macAddr);
 		strcat((char *)client, "_client");
 		return 0;
 	}
 	return -1;
-
 }
 
-HI_S32 get_mqtt_pubTopic(char    * macAddr, char *pubTopic)
+
+HI_S32
+get_mqtt_pubTopic(char    * macAddr, char *pubTopic)
 {
-	
-	if (strlen(macAddr)> 0) //ti设备，设备ID长度是9个字节
-	{
+	if (strlen(macAddr)> 0) {
 		strcpy((char *)pubTopic, "/BOX/");
 		strcat((char *)pubTopic, macAddr);
 		strcat((char *)pubTopic, "/pub");
@@ -149,10 +147,11 @@ HI_S32 get_mqtt_pubTopic(char    * macAddr, char *pubTopic)
 	return -1;
 }
 
-HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic)	
+
+HI_S32 
+get_mqtt_subTopic(char *macAddr, char  *subTopic)	
 {
-	if (strlen(macAddr)> 0) //ti设备，设备ID长度是9个字节
-	{
+	if (strlen(macAddr)> 0) {
 		strcpy((char *)subTopic, "/BOX/");
 		strcat((char *)subTopic, macAddr);
 		strcat((char *)subTopic, "/sub");
@@ -162,7 +161,8 @@ HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic)
 }
 
 
-HI_VOID get_pub_Msg(char *pubmsg)
+HI_VOID 
+get_pub_Msg(char *pubmsg)
 {
 	cJSON *PubDTO; char *out;
 	PubDTO=cJSON_CreateObject();
@@ -181,25 +181,29 @@ HI_VOID get_pub_Msg(char *pubmsg)
 	
 }
 
-HI_VOID get_time(char *time_now)
-{
- struct tm nowtime;
- struct timeval tv;
- gettimeofday(&tv, NULL);
- localtime_r(&tv.tv_sec,&nowtime);
 
- sprintf(time_now,"%d-%d-%d %d:%d:%d",
-    nowtime.tm_year+1900,
-    nowtime.tm_mon+1,
-    nowtime.tm_mday,
-    nowtime.tm_hour,
-    nowtime.tm_min,
-    nowtime.tm_sec
- );
- printf("current time is %s\n",time_now);
+HI_VOID 
+get_time(char *time_now)
+{
+	struct tm nowtime;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	localtime_r(&tv.tv_sec,&nowtime);
+
+	sprintf(time_now,"%d-%d-%d %d:%d:%d",
+		nowtime.tm_year+1900,
+		nowtime.tm_mon+1,
+		nowtime.tm_mday,
+		nowtime.tm_hour,
+		nowtime.tm_min,
+		nowtime.tm_sec
+	);
+	printf("current time is %s\n",time_now);
 }
 
-HI_VOID get_pubContent_msg(char *pubContent)
+
+HI_VOID 
+get_pubContent_msg(char *pubContent)
 {
 	cJSON *PubContentDTO,*AlarmDTO; char *out;
 	PubContentDTO=cJSON_CreateObject();
@@ -211,13 +215,14 @@ HI_VOID get_pubContent_msg(char *pubContent)
 	//cJSON_AddStringToObject(AlarmDTO,"mac", 	macAddr);
 	out=cJSON_Print(PubContentDTO);	cJSON_Delete(PubContentDTO); printf("%s\n",out);
 		
-			//sprintf(pubmsg, "%s", out);
+	//sprintf(pubmsg, "%s", out);
 	strcpy(pubContent, out);
 		
 	free(out);
 }
 
-void get_warning_msg(char *pubmsg)
+HI_VOID 
+get_warning_msg(char *pubmsg)
 {
 	cJSON *PubDTO,*PubContentDTO,*AlarmDTO; char *out;
 	PubDTO=cJSON_CreateObject();

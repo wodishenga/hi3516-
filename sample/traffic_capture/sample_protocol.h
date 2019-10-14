@@ -42,7 +42,7 @@ extern HI_S32 get_mqtt_pubTopic(char    * macAddr, char *pubTopic);
 extern HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic);
 extern HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic);
 extern HI_VOID get_pubContent_msg(char *pubContent);
-extern void get_warning_msg(char *pubmsg); 
+extern HI_VOID get_warning_msg(char *pubmsg); 
 
 
 
