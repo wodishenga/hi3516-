@@ -29,6 +29,7 @@ extern "C" {
 
 #include "sample_comm.h"
 #include "sample_picture_process.h"
+#include "sample_mqtt.h"
 
 /******************************************************************************
 * function : show usage
@@ -47,6 +48,7 @@ static VENC_CHN g_VencChn = 0;
 static VI_CHN  g_ViChn = 0;
 
 static pthread_t g_captureThread;
+static pthread_t g_mqttThread;
 static HI_BOOL g_StopThread = HI_FALSE;
 #define USER_INFO_LINE_NUM 4
 
@@ -69,6 +71,7 @@ static void SAMPLE_Capture_HandleSig(HI_S32 signo)
     {
         g_StopThread = HI_TRUE;
         pthread_join(g_captureThread, HI_NULL);
+		pthread_join(g_mqttThread, HI_NULL);
         SAMPLE_COMM_All_ISP_Stop();
         SAMPLE_COMM_VO_HdmiStop();
         SAMPLE_COMM_SYS_Exit();
@@ -535,7 +538,7 @@ static HI_S32 SAMPLE_Capture_TriggerFrameProc(VI_PIPE ViPipe, VI_CHN ViChn, VENC
     const VIDEO_FRAME_INFO_S* pastRawInfo[1];
     VIDEO_FRAME_INFO_S stYUVFrameInfo;
     HI_S32 s32MilliSec = 80;
-
+	char pubMsg[300] = "0";
 
     /**********************************
     1. first send raw
@@ -663,7 +666,17 @@ static HI_S32 SAMPLE_Capture_TriggerFrameProc(VI_PIPE ViPipe, VI_CHN ViChn, VENC
 	s32Ret = SAMPLE_Picture_Processing(&stYUVFrameInfo.stVFrame);
 	if(1 == s32Ret)
 	{
-		SAMPLE_PRT("fire is home\n");	
+		if (get_pub_info(4,pubMsg) != 0) {
+			printf("Failed to get warning pubinfo\n");
+			return -1;
+		} 
+	
+		/*推送告警消息*/
+  		int msgLen = strlen(pubMsg);
+		if (mqtt_publish_data(pubMsg, msgLen) != 0 ) {
+			printf("Failed to publish warning data\n");
+			return -1;
+		}
 	}
 
     s32Ret = HI_MPI_VENC_SendFrame(VeChn, &stYUVFrameInfo, s32MilliSec);
@@ -897,6 +910,14 @@ HI_VOID * SAMPLE_Capture_Thread(HI_VOID* pargs)
 
 	return HI_NULL;
 }
+
+HI_VOID * SAMPLE_Mqtt_Thread(HI_VOID* pargs)
+{
+	mqtt_subscribing_process();
+	
+	return HI_NULL;
+}
+
 HI_S32 SAMPLE_TrafficCapture_Offline(HI_VOID)
 {
     SAMPLE_SNS_TYPE_E  enSnsType;
@@ -1082,11 +1103,15 @@ HI_S32 SAMPLE_TrafficCapture_Offline(HI_VOID)
 
     g_StopThread = HI_FALSE;
     pthread_create(&g_captureThread, HI_NULL, SAMPLE_Capture_Thread, HI_NULL);
+	/*创建一个线程连接服务器*/
+	pthread_create(&g_mqttThread, HI_NULL, SAMPLE_Mqtt_Thread, HI_NULL);
 
     PAUSE();
 
     g_StopThread = HI_TRUE;
     pthread_join(g_captureThread, HI_NULL);
+
+	pthread_join(g_mqttThread, HI_NULL);
 
     stDumpAttr.bEnable = HI_FALSE;
     stDumpAttr.u32Depth = 0;

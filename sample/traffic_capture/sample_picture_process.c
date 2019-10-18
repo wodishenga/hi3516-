@@ -195,7 +195,6 @@ SAMPLE_Yuv420_to_Mat(Mat &dst, unsigned char* pYUV420, int width, int height)
 }
 
 
-
 /*火焰检测算法, 是火焰，返回1；不是火焰，返回0*/
 HI_S32 
 SAMPLE_Flame_Detection(Mat src)
@@ -236,6 +235,7 @@ SAMPLE_Flame_Detection(Mat src)
 	return ifFire;
  
 }
+
 
 HI_S32 
 SAMPLE_Picture_Processing(VIDEO_FRAME_S* pVBuf)

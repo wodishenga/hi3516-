@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef PROTOCOL_H_
-#define PROTOCOL_H_
+#ifndef SAMPLE_PROTOCOL_H_
+#define SAMPLE_PROTOCOL_H_
 
 #include "sample_comm.h"
 
@@ -40,9 +40,7 @@ extern HI_S32 get_mqtt_username(char    * macAddr, char *username);
 extern HI_S32 get_mqtt_clientid(char    * macAddr, char *client);
 extern HI_S32 get_mqtt_pubTopic(char    * macAddr, char *pubTopic);
 extern HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic);
-extern HI_S32 get_mqtt_subTopic(char *macAddr, char  *subTopic);
-extern HI_VOID get_pubContent_msg(char *pubContent);
-extern HI_VOID get_warning_msg(char *pubmsg); 
+extern HI_S32 get_pub_info(int pub_id, char *pub_msg);
 
 
 

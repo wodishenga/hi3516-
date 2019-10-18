@@ -5,6 +5,8 @@ OBJS  := $(SMP_SRCS:%.c=%.o)
 CFLAGS += $(COMM_INC)
 
 MPI_LIBS += $(REL_LIB)/libhdmi.a
+MPI_LIBS += /usr/local/lib/libpaho-mqtt3c.so.1
+CFLAGS += -I/root/paho.mqtt.c/src
 
 .PHONY : clean all
 
