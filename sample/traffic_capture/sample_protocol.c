@@ -133,7 +133,7 @@ HI_S32
 get_mqtt_pubTopic(char    * macAddr, char *pubTopic)
 {
 	if (strlen(macAddr)> 0) {
-		strcpy((char *)pubTopic, "/BOX/");
+		strcpy((char *)pubTopic, "/SMARTCAMERA/");
 		strcat((char *)pubTopic, macAddr);
 		strcat((char *)pubTopic, "/pub");
 		return 0;
@@ -146,7 +146,7 @@ HI_S32
 get_mqtt_subTopic(char *macAddr, char  *subTopic)	
 {
 	if (strlen(macAddr)> 0) {
-		strcpy((char *)subTopic, "/BOX/");
+		strcpy((char *)subTopic, "/SMARTCAMERA/");
 		strcat((char *)subTopic, macAddr);
 		strcat((char *)subTopic, "/sub");
 		return 0;
@@ -188,6 +188,7 @@ get_pub_content(char *pub_content)
 	cJSON_AddStringToObject(alarmDTO,"alarm_time", 	date);
 	cJSON_AddNumberToObject(alarmDTO,"channel", 	0);
 	cJSON_AddStringToObject(alarmDTO,"mac", 	macAddr);
+	cJSON_AddNumberToObject(alarmDTO,"oneself", 1);       //是否带分析功能
 	cJSON_AddNumberToObject(alarmDTO,"statu",	8);
 
 	msg=cJSON_Print(ContentDTO);	cJSON_Delete(ContentDTO); 
@@ -201,19 +202,16 @@ get_pub_content(char *pub_content)
 static void
 process(char *str)
 {
-    int len = strlen(str);
-    char buff[len+1];
-    int count = 0;
-    char *p = str;
-    while(*p != '\0')
-    {
-        if(*p=='\r' || *p=='\t' || *p=='\n')
-        {
+	int len = strlen(str);
+	char buff[len+1];
+	int count = 0;
+	char *p = str;
+	while(*p != '\0')
+	{
+        if(*p == '\r' || *p == '\t' || *p == '\n') {
             p++;
             continue;
-        }
-        else
-        {
+        } else {
             buff[count] = *p;
             count++;
             p++;
@@ -243,20 +241,23 @@ get_pub_info(int pub_id, char *pub_msg)
 	cJSON_AddNumberToObject(PubDTO,"pub_tp",		pub_id);
 
 	switch (pub_id) {
-		case 1:
+		case 100:
 			sprintf(md5buf, "%d%lld%s", pub_id, timestamp, "_zdst666");
 			break;
 		
 		case 4:
+			
 			cJSON *PubContentDTO,*AlarmDTO;
 			/*获取现在的时间*/
 			get_time(date);
 			
 			cJSON_AddItemToObject(PubDTO, "pub_content", PubContentDTO=cJSON_CreateObject());
 			cJSON_AddItemToObject(PubContentDTO, "alarm", AlarmDTO=cJSON_CreateObject());
+			
 			cJSON_AddStringToObject(AlarmDTO,"alarm_time", 	date);
 			cJSON_AddNumberToObject(AlarmDTO,"channel", 	0);
 			cJSON_AddStringToObject(AlarmDTO,"mac", 	macAddr);
+			cJSON_AddNumberToObject(AlarmDTO,"oneself", 1);       //是否带分析功能
 			cJSON_AddNumberToObject(AlarmDTO,"statu", 	8);
 			/*获取pubcontent 字符串*/
 			get_pub_content(pubContentDTO);

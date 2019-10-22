@@ -17,11 +17,11 @@ char macAddr[30] = "0";
 char username[50] = "42BA173CBC6A_account"; //添加的用户名
 char password[50] = "6a624c8a835e734c87285aedd9834af8"; //添加的密码
 char clientID[50] = "46DBE224D516_client"; //客户端id
-char pubTopic[50] = "/BOX/42BA173CBC6A/pub"; //推送的topic
-char subTopic[50] = "/BOX/42BA173CBC6A/sub"; //订阅的topic
+char pubTopic[50] = "/SMARTCAMERA/42BA173CBC6A/pub"; //推送的topic
+char subTopic[50] = "/SMARTCAMERA/42BA173CBC6A/sub"; //订阅的topic
 
 
-char globalTopic[50] = "/BOX/global/sub";
+char globalTopic[50] = "/SMARTCAMERA/global/sub";
 char serverIP[50] = "172.16.0.19:18884";
 //char serverIP[50] = "192.168.1.69:1883";
 
@@ -173,8 +173,8 @@ mqtt_subscribing_process(void)
 		return -1;
 	}
 
-	/*主动向服务器获取配置*/
-	if (get_pub_info(1,pubMsg) != 0) {
+	/*发送上线消息*/
+	if (get_pub_info(100,pubMsg) != 0) {
 		printf("Failed to get pubinfo\n");
 		return -1;
 	} 
